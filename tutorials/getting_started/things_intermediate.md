@@ -11,10 +11,7 @@ This section will show an example of dealing with a binding where the bridge Thi
 
 Scenario: you have some Z-Wave devices, including a wall plug and a rollershutter module, and a Z-Wave controller stick connected to the computer running openHAB.
 
-{::options toc_levels="2..4"/}
-
-- TOC
-{:toc}
+[[toc]]
 
 ## Install the Binding
 
@@ -53,7 +50,7 @@ Choose the correct port, alter the name and/or ID of the controller Thing, then 
 Once back on the Things screen, click on the "+" button then on Z-Wave Binding again.
 Click scan and all the devices already paired with the Zwave controller will be discovered and appear in the Inbox.
 To pair a new device, while on this screen, perform the procedure specific to the device to include it in your network.
-Go to the add-ons section of [this site]({{base}}/addons/bindings/zwave/doc/things.html#things-supported-by-the-z-wave-binding) and search for for the device model in the search bar.
+Go to the add-ons section of [this site](/addons/bindings/zwave/doc/things.html#things-supported-by-the-z-wave-binding) and search for for the device model in the search bar.
 The page should give you details on the inclusion procedure.
 Alternatively, look in the device's documentation from the vendor.
 
@@ -63,5 +60,5 @@ Approve it in the usual way.
 Repeat this procedure for every Zwave device.
 
 Note: Battery powered devices will be discovered, but may remain as an "unknown" type until the device has woken up enough for the binding to discover what it is.
-On it's own, this process can take days.
+On its own, this process can take days.
 To speed up the process activate the device several times until the Thing shows the correct device type.

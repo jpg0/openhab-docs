@@ -12,21 +12,22 @@ Items have a state and are used through events.
 
 The following Item types are currently available (alphabetical order):
 
-| Item Name          | Description                                                        | Command Types                              |
-|--------------------|--------------------------------------------------------------------|--------------------------------------------|
-| Color              | Color information (RGB)                                            | OnOff, IncreaseDecrease, Percent, HSB      |
-| Contact            | Item storing status of e.g. door/window contacts                   | OpenClosed                                 |
-| DateTime           | Stores date and time                                               | -                                          |
-| Dimmer             | Item carrying a percentage value for dimmers                       | OnOff, IncreaseDecrease, Percent           |
-| Group              | Item to nest other Items / collect them in Groups                  | -                                          |
-| Image              | Holds the binary data of an image                                  | -                                          |
-| Location           | Stores GPS coordinates                                             | Point                                      |
-| Number             | Stores values in number format, takes an optional dimension suffix | Decimal                                    |
-| Number:<dimension> | like Number, additional dimension information for unit support     | Quantity                                   |
-| Player             | Allows to control players (e.g. audio players)                     | PlayPause, NextPrevious, RewindFastforward |
-| Rollershutter      | Typically used for blinds                                          | UpDown, StopMove, Percent                  |
-| String             | Stores texts                                                       | String                                     |
-| Switch             | Typically used for lights (on/off)                                 | OnOff                                      |
+| Item Name                | Description                                                        | Command Types                                       |
+| ------------------------ | ------------------------------------------------------------------ | --------------------------------------------------- |
+| Call                     | Identify phone calls                                               | Refresh                                             |
+| Color                    | Color information (RGB)                                            | OnOff, IncreaseDecrease, Percent, HSB, Refresh      |
+| Contact                  | Item storing status of e.g. door/window contacts                   | OpenClosed, Refresh                                 |
+| DateTime                 | Stores date and time                                               | DateTime                                            |
+| Dimmer                   | Item carrying a percentage value for dimmers                       | OnOff, IncreaseDecrease, Percent, Refresh           |
+| Group                    | Item to nest other Items / collect them in Groups                  | -                                                   |
+| Image                    | Holds the binary data of an image                                  | Refresh                                             |
+| Location                 | Stores GPS coordinates                                             | Point, Refresh                                      |
+| Number                   | Stores values in number format, takes an optional dimension suffix | Decimal, Refresh                                    |
+| Number:&lt;dimension&gt; | like Number, additional dimension information for unit support     | Quantity, Refresh                                   |
+| Player                   | Allows to control players (e.g. audio players)                     | PlayPause, NextPrevious, RewindFastforward, Refresh |
+| Rollershutter            | Typically used for blinds                                          | UpDown, StopMove, Percent, Refresh                  |
+| String                   | Stores texts                                                       | String, Refresh                                     |
+| Switch                   | Typically used for lights (on/off)                                 | OnOff, Refresh                                      |
 
 ## Group Items
 
@@ -60,13 +61,16 @@ For available Group functions and examples see [Configuration Guide](../configur
 
 ### DateTimeType
 
-`DateTimeType` objects are parsed using Java's `SimpleDateFormat.parse()` using the first matching pattern:
+`DateTimeType` objects are parsed using Java's `DateTimeFormatter` with the first matching pattern:
 
-1. `yyyy-MM-dd'T'HH:mm:ss.SSSZ`
-1. `yyyy-MM-dd'T'HH:mm:ss.SSSz`
-1. `yyyy-MM-dd'T'HH:mm:ss.SSSX`
-1. `yyyy-MM-dd'T'HH:mm:ssz`
-1. `yyyy-MM-dd'T'HH:mm:ss`
+1. `yyyy-MM-dd'T'HH:mm[:ss[.SSS]]Z` or `yyyy-MM-dd HH:mm[:ss[.SSS]]Z`
+1. `yyyy-MM-dd'T'HH:mm[:ss[.SSS]]X` or `yyyy-MM-dd HH:mm[:ss[.SSS]]X`
+1. `yyyy-MM-dd'T'HH:mm[:ss[.SSS]]z` or `yyyy-MM-dd HH:mm[:ss[.SSS]]z`
+1. `yyyy-MM-dd'T'HH:mm[:ss[.SSS]]` or `yyyy-MM-dd HH:mm[:ss[.SSS]]`
+1. `HH:mm[:ss[.SSS]]` with or without a timezone
+1. A string of fewer than 12 digits as epoch in seconds
+1. A string of 12 digits of more as epoch in milliseconds
+1. `yyyy-MM-dd` with or without a timezone
 
 | Literal | Standard           | Example                               |
 |---------|--------------------|---------------------------------------|
@@ -103,6 +107,7 @@ HSB string values consist of three comma-separated values for hue (0-360°), sat
 | OpenClosedType        | `OPEN`, `CLOSED`        |
 | PlayPauseType         | `PLAY`, `PAUSE`         |
 | RewindFastforwardType | `REWIND`, `FASTFORWARD` |
+| RefreshType           | `REFRESH`               |
 | StopMoveType          | `STOP`, `MOVE`          |
 | UpDownType            | `UP`, `DOWN`            |
 

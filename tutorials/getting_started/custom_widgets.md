@@ -11,10 +11,7 @@ A growing number of very impressive custom widgets have been posted to [Add-ons 
 This page provides just a few examples of custom widgets with an emphasis on the overall approach to developing your own.
 For a comprehensive reference on creating widgets, please see the [Building Pages]({{base}}/ui/building-pages.html) guide in the docs.
 
-{::options toc_levels="2..4"/}
-
-- TOC
-{:toc}
+[[toc]]
 
 ## Where to Create Custom Widgets
 
@@ -30,7 +27,7 @@ You will have to apply the widget to an Item and refresh a page after saving the
 ## Building Custom Widgets
 
 As you are learning how widgets work and all of the available options, it might be easier to create the widget using the form presented when adding the Item metadata and then copying the YAML from the code tab to the Custom Widget editor.
-When doing this make sure to fill out *all* the fields, because when using the defaults no value is added to the YAML in the code tab.
+When doing this make sure to fill out _all_ the fields, because when using the defaults no value is added to the YAML in the code tab.
 So, for example, be sure to enter in the Item field.
 
 Here is a filled-out form customizing a list Item widget for a light.
@@ -133,7 +130,7 @@ config:
   iconColor: '=(items[props.item].state == "ON") ? "yellow" : "gray"'
   title: =props.title
   color: '=(items[props.item].state == "ON") ? "yellow" : "gray"'
-  item: props.item
+  item: =props.item
 ```
 
 Save the widget and return to one of the Items that should use this widget.
@@ -198,7 +195,7 @@ Up to this point the tutorial has focused on list item widgets because as someon
 However, there is that Overview tab that needs to be manually populated too.
 This page will be populated with stand-alone widgets or card widgets.
 
-Often, one will want to have one single stand-alone widget to represent a single Equipment, for example a thermostat or a Chomecast.
+Often, one will want to have one single stand-alone widget to represent a single Equipment, for example a thermostat or a Chromecast.
 These will be a single card that provides the display and interaction with many Items.
 If one has more than one Equipment that will use the same widget, or the widget is complex, create a custom widget for these.
 Once created, apply the custom widget to the Equipment Group Item in the model.
@@ -372,7 +369,7 @@ slots:
         default:
           - component: oh-repeater
             config:
-              fragement: true
+              fragment: true
               for: item
               sourceType: itemsWithTags
               itemTags: Switch,Light
@@ -382,8 +379,8 @@ slots:
                 - component: oh-toggle-item
                   config:
                     icon: f7:lightbulb
-                    iconColor: '=(loop.item.state == "ON") ? "yellow" : "gray"'
-                    color: '=(loop.item.state == "ON") ? "yellow" : "gray"'
+                    iconColor: '=(items[loop.item.name].state == "ON") ? "yellow" : "gray"'
+                    color: '=(items[loop.item.name].state == "ON") ? "yellow" : "gray"'
                     title: =loop.item.label
                     item: =loop.item.name
 ```
@@ -416,7 +413,7 @@ For this tutorial we will have two rows and three columns.
 
 ![Overview row and columns](images/overview_row_and_columns.png)
 
-Now we will add a custom widget to that first columnn.
+Now we will add a custom widget to that first column.
 In this case we will add a garage door widget that includes a camera feed, shows the door status, and allows triggering two garage doors.
 Click on the + in that first cell and select the desired widget from the list.
 This is a simple widget that doesn't use any properties, so we are done.
@@ -452,7 +449,7 @@ Once you are happy, save the page and that will become your Overview page.
 ## Responsive Pages
 
 The Page will be viewed on a variety of screen sizes, from computers to tablets to phones.
-To make the page adapt to the different screen widths there is a "Column Settings" option in a given column's setting icon.
+To make the page adapt to the different screen widths there is a "Column Options" option in a given column's setting icon.
 
 ![Column Settings](images/column_options.png)
 

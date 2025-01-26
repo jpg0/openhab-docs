@@ -16,7 +16,7 @@ Try [git - the simple guide](https://rogerdudler.github.io/git-guide/) as a star
 Add-ons and the openHAB core itself are written in Java.
 Java is not hard to learn, but it helps if you have a general technical understanding of programming languages.
 
-The different guides of this chapter assume that you are somewhat familiar with Java 11 and that you have a rough understanding of Git's workflow (e.g. "checkout", "branches", "push").
+The different guides of this chapter assume that you are somewhat familiar with Java 21 and that you have a rough understanding of Git's workflow (e.g. "checkout", "branches", "push").
 
 ## Choose the Right Concept
 
@@ -24,7 +24,7 @@ openHAB allows you to build upon the following concepts:
 
 - **Bindings**: A binding connects to external services or devices.
 - **Automation engine module**: A trigger, condition, or action that can be used in automation rules (or scripts).
-- **Transformation / Profiles**: Can be used to transform a *Thing Channel*- value before it is assigned to an *Item*.
+- **Transformation / Profiles**: Can be used to transform a _Thing Channel_- value before it is assigned to an _Item_.
 - **An IO service**: Exposes openHAB internals via a defined interface (for example the REST interface, HomeKit or Hue Emulation Service).
 - **A Persistence service**: Persist item state updates and/or changes and allows them to be retrieved for specific points in time.
 - **Natural language processing skill**:
@@ -43,43 +43,66 @@ General [coding guidelines](guidelines.html) apply to all types of addon develop
 
 ## Setup the Development Environment
 
-Development can happen on any of the supported operating systems (Windows, Mac OS, Linux).
+Development can happen on any of the supported operating systems (Windows, macOS, Linux).
 
 Please ensure that you have the following prerequisites installed as well:
 
 1. [Git](https://git-scm.com/downloads) For retrieving our source code and push changes back. On Windows: Must be available in %PATH%
-1. [Maven 3.x](https://maven.apache.org/download.cgi) Our buildsystem tool. On Windows: Must be available in %PATH%
-1. Java JDK 11, for example from Oracle [Oracle JDK 11](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html). On Windows: %JAVA% must be set.
+1. [Maven 3.x](https://maven.apache.org/download.cgi) Our build system tool. On Windows: Must be available in %PATH%
+1. Java JDK 21, for example from Oracle [Oracle JDK 21](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html). On Windows: %JAVA% must be set.
+
+::: tip Note
+Whereas openHAB 4.x series was based on Java 17, starting with openHAB 5.0.0-SNAPSHOT, **Java 21 is required**.
+:::
 
 You can use any IDE that is suitable for OSGi/Java development.
 We have prepared some step-by-step guides for the following IDEs:
 
 <table style="width:100%">
 <tr>
-<td style="width:30%">
+<td style="width:50%">
 
 [![Visual Studio Code](./ide/images/vscode.jpg)](ide/vscode.html)
 
 </td>
-<td style="width:30%">
+<td style="width:50%">
 
 [![Eclipse IDE](./ide/images/eclipse.jpg)](ide/eclipse.html)
 
 </td>
-<td style="width:30%">
+</tr>
+<tr>
+<td style="width:50%">
 
-[![Intellij IDE](./ide/images/intellij.jpg)](ide/intellij.html)
+[![IntelliJ IDE](./ide/images/intellij.jpg)](ide/intellij.html)
 
 </td>
-</tr>
+<td style="width:50%">
+
+[![Generic IDE](./ide/images/generic_ide.png)](ide/generic.html)
+
 </table>
 
 Not sure what to choose?: openHAB maintainers use [Eclipse IDE](https://wiki.eclipse.org/Eclipse_Installer).
 
+## Make your own copy of the code base
+
+openHAB has [several repositories](https://github.com/openhab) on GitHub.
+The most important ones are listed in the [Contribution section of the Developer Appendix](contributing.html#the-repositories).
+
+For developing a new binding, you'll need to fork the [openhab-addons](https://github.com/openhab/openhab-addons) repository (see [GitHub Docs: Fork a repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo)) and then clone your fork to your development machine.
+Next, create a new branch for your work on the new binding.
+
+## Read the guidelines
+
+Before starting your work, please have a look at the [Coding Guidelines](guidelines.html) and the overall [Contribution docs](contributing.html).
+It is always better to know the guidelines before starting coding than having to change your code afterwards.
+
 ## Develop a NEW binding
 
 To help start developing a new binding, a script is available to generate the basic skeleton for you.
-This script is specific for binding addons. Follow these steps to generate your binding:
+This script is specific for binding add-ons.
+Follow these steps to generate your binding:
 
 1. From the command line in `openhab-addons/bundles` directory to create a skeleton of a new binding `mynewbinding` run:
 
@@ -101,14 +124,14 @@ This script is specific for binding addons. Follow these steps to generate your 
 
 1. Accept with `Y` when the skeleton configuration asks for it.
 
-1. From `openhab-addons` root you can build only your binding with maven using the `-pl` option:
+1. From `openhab-addons` root you can build only your binding with Maven using the `-pl` option:
 
     ```bash
     mvn clean install -pl :org.openhab.binding.mynewbinding
     ```
 
    Where `mynewbinding` is the name of your new binding.
-   Some additional maven options that may help:
+   Some additional Maven options that may help:
    - `-U`: Forces all dependencies to be downloaded again.
    - `-am`: Builds all projects in openhab-addons your project dependends on.
    - `-o`: Won't update any dependencies.
@@ -117,7 +140,7 @@ This script is specific for binding addons. Follow these steps to generate your 
    - `-Dspotless.check.skip=true` : Skips the spotless file formatting checks
    - `-Dohc.version=3.0.2` : The version of openhab you are building for
 
-1. To start your new binding it's a good practise to commit your code on a new git branch:
+1. To start your new binding it's a good practice to commit your code on a new git branch:
 
    ```bash
    git checkout -b <mynewbranch>
@@ -137,3 +160,13 @@ following will tell git and spotless to use LF endings:
 ```text
 * text eol=lf
 ```
+
+Further documentation about binding development can be found in the [Bindings Developer Guide](bindings/index.html).
+
+## Contribute your changes back to openHAB
+
+When you are finished with your new binding (or in the process of development and need help), you need to create a pull request (PR) to the so-called upstream repository, in this case openhab-addons.
+Have a look at [GitHub Docs: Creating a pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request) if you need help.
+
+Once you have created your PR, the maintainers will review your code and provide feedback.
+Please be patient and be prepared to make changes to your code based on the feedback you receive.

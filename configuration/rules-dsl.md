@@ -1,19 +1,18 @@
 ---
 layout: documentation
-title: Rules
+title: Textual Rules
 ---
 
 # Textual Rules
 
 "Rules" are used for automating processes: Each rule can be triggered, which invokes a script that performs any kinds of tasks, e.g. turn on lights by modifying your items, do mathematical calculations, start timers etcetera.
 
-openHAB has a highly integrated, lightweight but yet powerful rule engine included.
-On this page you will learn how to leverage its functionality to do *real* home automation.
+Note that there is also a visual way of programming openHAB rules, which may be more suitable for beginners. Its documentation can be found in the [Blockly Reference section]({{base}}/configuration/blockly/)
 
-{::options toc_levels="2..4"/}
+openHAB has a highly integrated, lightweight but yet powerful rule engine called _Rules DSL_ included.
+On this page you will learn how to leverage its functionality to do _real_ home automation.
 
-- TOC
-{:toc}
+[[toc]]
 
 ## Defining Rules
 
@@ -117,8 +116,6 @@ end
 - `<TRIGGER_CONDITION>` - The triggering event upon which the rule logic is executed. A rule is executed in reaction to one or more trigger conditions. Multiple conditions are separated by the keyword `or`. Please see below for different possible triggers.
 - `<SCRIPT_BLOCK>` - Contains the logic that should be executed when a trigger condition is met, see the [script](#scripts) section for details on its syntax.
 
-{: #rule-triggers}
-
 ### Rule Triggers
 
 Before a rule starts working, it has to be triggered.
@@ -132,8 +129,6 @@ There are different categories of rule triggers:
 - **Thing**-based triggers: They react on thing status, i.e. change from ONLINE to OFFLINE.
 
 Here are the details for each category:
-
-{: #event-based-triggers}
 
 ### Event-based Triggers
 
@@ -152,14 +147,13 @@ A simplistic explanation of the differences between `command` and `update` can b
 When using the `received command` trigger, the Rule might trigger **before** the Item's state is updated.
 Therefore, if the Rule needs to know what the command was, use the [implicit variable]({{base}}/configuration/rules-dsl.html#implicit-variables-inside-the-execution-block) `receivedCommand` instead of `<ItemName>.state`.
 
-{: #member-of-triggers}
-
 ### Member of Triggers
 
 As with Item based event-based triggers discussed above, you can listen for commands, status updates, or status changes on the members of a given Group.
 You can also decide whether you want to catch only a specific command/status or any.
 All of the [implicit variables]({{base}}/configuration/rules-dsl.html#implicit-variables-inside-the-execution-block) get populated using the Item that caused the event.
-The implicit variable `triggeringItem` is populated with the Item that caused the Rule to trigger.
+The implicit variables `triggeringItem` and `triggeringItemName` are populated with the Item and the item name that caused the Rule to trigger.
+The implicit variables `triggeringGroup` and `triggeringGroupName` are populated with the Group and the group name specified in the trigger, whose member caused the Rule to trigger.
 
 ```java
 Member of <group> received command [<command>]
@@ -172,15 +166,14 @@ It does not work with members of nested subgroups.
 Also, as with Item event-based triggers, when using `received command`, the Rule might trigger before the Item's state is updated.
 So in Rules where the Rule needs to know what the command was, use the `receivedCommand` implicit variable instead of `triggeringItem.state`.
 
-{: #time-based-triggers}
-
 ### Time-based Triggers
 
-You can either use some pre-defined expressions for timers or use a [cron expression](https://www.quartz-scheduler.org/documentation/quartz-2.2.2/tutorials/tutorial-lesson-06.html) instead:
+You can either use some pre-defined expressions for timers or use a [cron expression](https://www.quartz-scheduler.org/documentation/quartz-2.2.2/tutorials/tutorial-lesson-06.html) or an item instead:
 
 ```java
 Time is midnight
 Time is noon
+Time is <item> [timeOnly] [offset=N]
 Time cron "<cron expression>"
 ```
 
@@ -196,15 +189,17 @@ A cron expression takes the form of six or optionally seven fields:
 
 You may use the generator at [FreeFormatter.com](https://www.freeformatter.com/cron-expression-generator-quartz.html) to generate your cron expressions.
 
-{: #system-based-triggers}
+When using an item and you want to ignore the date-portion of that item the `timeOnly` option can be used.
+A positive or negative offset in seconds, relative to the date/time of the given item can be specified.
 
 ### System-based Triggers
 
-One system-based trigger is provided as described in the table below:
+System-based triggers are provided as described in the table below:
 
-| Trigger           | Description                                                                                                                                                                                        |
-|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| System started    | `System started` is triggered upon openHAB startup.  In openHAB version 2, `System started` is also triggered after the rule file containing the System started trigger is modified, or after item(s) are modified in a .items file. |
+| Trigger                              | Description                                                                                                                                                                                                                                          |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| System started                       | `System started` is triggered upon openHAB startup. In openHAB version 2, `System started` is also triggered after the rule file containing the System started trigger is modified, or after item(s) are modified in a .items file.                  |
+| System reached start level `<level>` | `System reached start level <level>` is triggered when openHAB reaches a specific start level. A list of possible start levels is available below. Please note that only levels 40 and higher are useful as the rule engine needs to be ready first. |
 
 You may wish to use the 'System started' trigger to initialize values at startup if they are not already set.
 
@@ -215,9 +210,20 @@ rule "Speedtest init"
 when
     System started
 then
-    createTimer(now.plusSeconds(30), [|
-        if (Speedtest_Summary.state == NULL || Speedtest_Summary.state == "") Speedtest_Summary.postUpdate("unknown")
-    ])
+    if (Speedtest_Summary.state == NULL || Speedtest_Summary.state == "") Speedtest_Summary.postUpdate("unknown")
+end
+```
+
+You can then execute a rule on the next startup level which depends on the value set by the initialization rule.
+
+Example:
+
+```java
+rule "Speedtest update"
+when
+    System reached start level 50
+then
+    logInfo("Speedtest", "We now have the following state right after startup: " + Speedtest_Summary.state)
 end
 ```
 
@@ -235,9 +241,24 @@ In openHAB version 3 the System-based Trigger for startlevel had been added, val
 100 - Startup is fully complete.
 ```
 
-Startlevels (logically only if startlevel >= 40) are only available in UI-Rules, not in DSL-Rules with textual configuration.
+Startlevels less than 40 are not available as triggers because the rule engine needs to start up first before it can execute any rules.
 
-{: #thing-based-triggers}
+A rule that triggers for a start level and is saved during development is reloaded, if the expected startlevel (or higher) has been reached.
+The reason behind is that updated rules are considered as new rules.
+
+Writing rules with quite low startlevels might be too early, as for instance not all things are online yet.
+
+Example:
+
+```java
+rule "Start level reload"
+when
+    System reached start level 70
+then
+    logInfo("StartLevelTest", "triggered a second time, if active rule being edited and saved another time.")
+    logInfo("StartLevelTest", "You won´t realize this behaviour under regular run conditions, each start level is reached exactly once.")
+end
+```
 
 ### Thing-based Triggers
 
@@ -250,19 +271,22 @@ Thing <thingUID> received update [<status>]
 Thing <thingUID> changed [from <status>] [to <status>]
 ```
 
-The status used in the trigger and the script is a string (no quotes).
+The status used in the trigger is a string (no quotes).
 You can find all the possible values for status from [Thing Status](/docs/concepts/things.html).
-And refer to [Thing Status Action](/docs/configuration/actions.html#thing-status-action) to find how to get thing status in the script.
 
 The `thingUID` is the identifier assigned to the Thing, manually in your configuration or automatically during auto discovery.
 You can find it from UI or from Karaf remote console.
 For example, one z-wave device can be "zwave:device:c5155aa4:node14".
+The `*` wildcard is allowed in the `thingUID`.
+For example, `chromecast:*` will trigger on all `chromecast` Things and `*` will trigger on all things.
+
+If the Rule needs to know what the triggering thing was, or access a string value of the previous or new status, use the [implicit variables]({{base}}/configuration/rules-dsl.html#implicit-variables-inside-the-execution-block) `triggeringThing`, `previousThingStatus` or `newThingStatus` to access the information.
+
+Refer to [Thing Status Action](/docs/configuration/actions.html#thing-status-action) to find how to get the new thing status details or description in the script.
 
 ::: tip Note
 You need to use quotes around `thingUID` if it contains special characters such as ':'.
 :::
-
-{: #channel-based-triggers}
 
 ### Channel-based Triggers
 
@@ -286,7 +310,7 @@ Channel "<triggerChannel>" triggered [<triggerEvent>]
 When a binding provides such channels, you can find the needed information in the corresponding binding documentation.
 There is no generic list of possible values for `triggerEvent`,
 The `triggerEvent`(s) available depend upon the specific implementation details of the binding.
-If the Rule needs to know what the received event was, use the [implicit variable]({{base}}/configuration/rules-dsl.html#implicit-variables-inside-the-execution-block) `receivedEvent` to access the information.
+If the Rule needs to know what the received event or the triggering channel was, use the [implicit variable]({{base}}/configuration/rules-dsl.html#implicit-variables-inside-the-execution-block) `receivedEvent` or `triggeringChannel` to access the information.
 
 Example:
 
@@ -298,8 +322,6 @@ then
     ...
 end
 ```
-
-{: #scripts}
 
 ## Scripts
 
@@ -323,8 +345,6 @@ if (Temperature.state < 20) {
 }
 ```
 
-{: #manipulating-item-states}
-
 ### Manipulating Item States
 
 Rules are often used to manipulate the state of an Item, for example switching lights on and off under certain conditions.
@@ -337,10 +357,10 @@ In relation to [event-based rule triggers]({{base}}/configuration/rules-dsl.html
 The following table summarizes the impact of the two manipulator commands on the rule execution due to the used trigger:
 
 | Command \ Rule Trigger   | `received update` | `received command` | `changed` |
-|--------------------------|-------------------|--------------------|-----------|
+| ------------------------ | ----------------- | ------------------ | --------- |
 | postUpdate               | ⚡ rule fires      | ❌                  | (depends) |
 | sendCommand              | (❌) see below     | ⚡ rule fires       | (depends) |
-| *Change through Binding* | ⚡ rule fires      | ⚡ rule fires       | (depends) |
+| _Change through Binding_ | ⚡ rule fires      | ⚡ rule fires       | (depends) |
 
 **Beware:**
 In most cases, a rule with a trigger of `received update` will fire following the command `sendCommand` as:
@@ -349,8 +369,6 @@ In most cases, a rule with a trigger of `received update` will fire following th
 - the Thing sends a status update to the Item.
 
 Besides the specific manipulator command methods `MyItem.sendCommand(<new_state>)` and `MyItem.postUpdate(<new_state>)`, generic manipulators in the form of `sendCommand(MyItem, <new_state>)` and `postUpdate(MyItem, <new_state>)` are available. The specific versions is normally recommended.
-
-{: #sendcommand-method-vs-action}
 
 #### MyItem.sendCommand("new state") versus sendCommand(MyItem, "new state")
 
@@ -366,12 +384,12 @@ An upper case letter data type after a `val` and `var` statement, for example `v
 Objects are more complex than primitives.
 
 Objects have special methods that can perform many necessary type conversions automatically.
-Using `Myitem.sendCommand(new_state)` or `Myitem.postUpdate(new_state)` will, in most cases, convert `new_state` into a type that Object `myItem` can apply.
+Using `MyItem.sendCommand(new_state)` or `MyItem.postUpdate(new_state)` will, in most cases, convert `new_state` into a type that Object `myItem` can apply.
 
-The Action `sendCommand(MyItem, new_state)` does not provide the same flexibilty.
+The Action `sendCommand(MyItem, new_state)` does not provide the same flexibility.
 For example, if `new_state` is typed as a primitive (e.g., `var int new_state = 3`) and myItem is of the Object type Dimmer:
 
-- the following command ***will fail***: ~~sendCommand(MyItem, new_state)~~.
+- the following command _**will fail**_: ~~sendCommand(MyItem, new_state)~~.
 - However, the following command **will work**: `MyItem.sendCommand(new_state)`.
 
 Using `MyItem.postUpdate(new_state)` or `MyItem.sendCommand(new_state)` will create the most stable code.
@@ -386,8 +404,6 @@ For example, if the name of the Item to receive an update or command was calcula
 val index = 5
 sendCommand("My_Lamp_" + index, ON)
 ```
-
-{: #using-state-of-items-in-rules}
 
 ### Using the States of Items in Rules
 
@@ -427,11 +443,9 @@ There are two ways to discover these methods:
     These methods can be called in Rules-DSL without the `get` part in name as in `(MyColorItem.state as HSBType).red)`.
     They retrieve the state of MyColorItem and then casts it as HSBType to be able to use the methods associated with the HSBType.
 
-{: #conversions}
-
 #### Working with Item States: Conversions
 
-*Reminder: For a complete and up-to-date list of what item types are currently allowed in openHAB and the command types each item can accept refer to the section on [items in the openHAB documentation]({{base}}/concepts/items.html).*
+_Reminder: For a complete and up-to-date list of what item types are currently allowed in openHAB and the command types each item can accept refer to the section on [items in the openHAB documentation]({{base}}/concepts/items.html)._
 
 Below a **non-exhaustive** list of some more common conversions.
 The interested reader is encouraged to also visit the [forum](https://community.openhab.org) where many more examples can be found.
@@ -451,7 +465,7 @@ The following code can be used to send an RGB value to a Color Item.
 import java.awt.Color
 
 // Create item
-val newColor = new Color(red, blue, green) // where red, blue, and green are ints between 0 and 255
+val newColor = new Color(red, blue, green) // where red, blue, and green are integers between 0 and 255
 
 //Saving to an Item
 MyColorItem.sendCommand(new HSBType(newColor))
@@ -484,13 +498,13 @@ A DateTime Item carries a **DateTimeType**, which internally holds a Java `Zoned
 
 ```java
 // Get epoch from DateTimeType
-val Number epoch = (MyDateTimeItem.state as DateTimeType).zonedDateTime.toInstant.toEpochMilli
+val Number epoch = (MyDateTimeItem.state as DateTimeType).instant.toEpochMilli
 
 // Get epoch from Java ZonedDateTime
 val Number nowEpoch = now.toInstant.toEpochMilli
 
 // Convert DateTimeType to Java ZonedDateTime
-val javaZonedDateTime = (MyDateTimeItem.state as DateTimeType).zonedDateTime
+val javaZonedDateTime = (MyDateTimeItem.state as DateTimeType).getZonedDateTime(ZoneId.systemDefault)
 
 // Convert Java ZonedDateTime to DateTimeType
 val DateTimeType date = new DateTimeType(now)
@@ -519,13 +533,13 @@ ZonedDateTimes provide a number of useful methods for comparing date times toget
 
 ```java
 // See if DateTimeType is before now
-if(now.isBefore((MyDateTimeItem.state as DateTimeType).zonedDateTime)) ...
+if(now.toInstant.isBefore((MyDateTimeItem.state as DateTimeType).instant)) ...
 
 // See if DateTimeType is after now
-if(now.isAfter((MyDateTimeItem.state as DateTimeType).zonedDateTime)) ...
+if(now.toInstant.isAfter((MyDateTimeItem.state as DateTimeType).instant)) ...
 
 // Get the hour in the day from a DateTimeType
-val hour = (MyDateTimeItem.state as DateTimeType).zonedDateTime.hour
+val hour = (MyDateTimeItem.state as DateTimeType).getZonedDateTime(ZoneId.systemDefault).hour
 ```
 
 ##### Dimmer Item
@@ -624,7 +638,7 @@ var isQuantity = myItem.state instanceof QuantityType
 
 // comparing Quantities
 // Tempting ... if (fahrenheit > 10) but NO!! that will not work as expected
-if (fahrenheit > 10|°C) { logInfo("test, "It's warm.") }
+if (fahrenheit > 10|°C) { logInfo("test", "It's warm.") }
 ```
 
 Other useful conversions can be found under Dimmer Item.
@@ -663,7 +677,7 @@ The Player item allows to control players (e.g. audio players) with commands suc
 The Player Item carries three types with predefined commands
 
 | State Type                | Commands            |
-|---------------------------|---------------------|
+| ------------------------- | ------------------- |
 | **PlayPauseType**         | PLAY, PAUSE         |
 | **RewindFastforwardType** | REWIND, FASTFORWARD |
 | **NextPreviousType**      | NEXT, PREVIOUS      |
@@ -702,7 +716,7 @@ val itemvalue = new java.math.BigDecimal(Integer::parseInt(myHexValue, 16))
 
 ##### Switch Item
 
-A Switch Item carries a OnOffType.
+A Switch Item carries an OnOffType.
 OnOffType is an Enumeration.
 One can convert from ON and OFF to 1 and 0 with code similar to:
 
@@ -737,7 +751,7 @@ As a consequence, the use of `sendCommand(MyItem, primitive)`, using a primitive
 The different syntax for the generic and the objective-specific differs and is given in the table below:
 
 | Generic (Action)                 | Specific (Method)               |
-|----------------------------------|---------------------------------|
+| -------------------------------- | ------------------------------- |
 | `postUpdate(MyItem, new_state)`  | `MyItem.postUpdate(new_state)`  |
 | `sendCommand(MyItem, new_state)` | `MyItem.sendCommand(new_state)` |
 
@@ -746,8 +760,6 @@ Using the method `MyItems.sendCommand()` that is owned by MyItem will use the `s
 For example, the `NumberItem` class would have a `sendCommand(int)`, `sendCommand(long)`, `sendCommand(float)`, `sendCommand(double)`, `sendCommand(Number)`, `sendCommand(DecimalType)`, and `sendCommand(String)` method.
 Each of these separate methods is individually written to handle all of these different types of Objects.
 MyItem will automatically apply the method that corresponds to the argument type.
-
-{: #implicit-variables}
 
 ### Implicit Variables inside the Execution Block
 
@@ -758,9 +770,18 @@ Besides the implicitly available variables for items and commands/states, rules 
 - `newState` - implicitly available in every rule that has at least one status update or status change event trigger.
 - `triggeringItemName` - implicitly available in every rule that has at least one status update, status change or command event trigger.
 - `triggeringItem` - implicitly available in every rule that has a "Member of" trigger.
+- `triggeringGroupName` - implicitly available in every rule that has a "Member of" trigger.
+- `triggeringGroup` - implicitly available in every rule that has a "Member of" trigger.
 - `receivedEvent` - implicitly available in every rule that has a channel-based trigger.
+- `triggeringChannel` - implicitly available in every rule that has a channel-based trigger.
+- `triggeringThing` - implicitly available in every rule that has a thing-based trigger.
+- `previousThingStatus` - implicitly available in every rule that has a thing-based trigger.
+- `newThingStatus` - implicitly available in every rule that has a thing-based trigger.
 
-{: #return}
+- `sharedCache` - a cache that is shared between all rules and all scripting languages
+- `privateCache` - a cache private to the script/rule that requests it
+
+For further documentation on using the cache see [here](jsr223.html#cache-preset).
 
 ### Early returns
 
@@ -774,8 +795,6 @@ Heating.sendCommand(ON)
 ```
 
 Caveat: Please note the semicolon after the return statement which terminates the command without an additional argument.
-
-{: #concurrency-guard}
 
 ### Concurrency Guard
 
@@ -799,8 +818,6 @@ then
 end
 ```
 
-{: #transformations}
-
 ### Transformations
 
 openHAB [Transformation services](/addons/#transform) can be used in rules to transform/translate/convert data.
@@ -813,7 +830,7 @@ transform("<transformation-identifier>", "<transf. expression or transf. file na
 
 - `<transformation-identifier>` - Shorthand identifier of the transformation service
 - `<transf. expression or transf. file name>` - Transformation service specific
-- `<input-data or variable>` - The data to transform, MUST be of data type *String*
+- `<input-data or variable>` - The data to transform, MUST be of data type _String_
 
 Examples:
 
@@ -846,8 +863,6 @@ finally {
 ```
 
 For all available Transformation services please refer to the list of [Transformation Add-ons](/addons/#transform).
-
-{: #logging}
 
 ### Logging
 

@@ -8,10 +8,7 @@ title: Pages - Overview Page
 MainUI will automatically generate an Overview page (id:overview).
 This Overview page has four tabs: Overview, Locations, Equipment, and Properties.
 
-{::options toc_levels="2..4"/}
-
-- TOC
-{:toc}
+[[toc]]
 
 ## Overview Page
 
@@ -129,7 +126,7 @@ Now on the page you will now see a section heading with the entered name, and al
 
 ![separators](images/separators.png)
 
-Tip 1 - Make sure to save before clicking "Back" or otherwise leaving the page.
+Tip 1 - Make sure to save before clicking "Back" or otherwise changes will be lost when leaving the page.
 You will have to reload the page to pick up the changes.
 
 Tip 2 - Open two separate tabs in your browser where you edit and view your page.
@@ -148,7 +145,7 @@ This will open a form with customization options.
 ##### Basic Settings
 
 Instead of using the Item's Label and parent Group as the Title and Subtitle of the card, these can be overridden and manually set.
-[Expressions]({{base}}/ui/building-pages.html#dynamically-configuring-components-with-expressions) can be used to make the Title and Subtitle change based on the states of Items or other conditions.
+[Expressions]({{base}}/ui/widget-expressions-variables.html) can be used to make the Title and Subtitle change based on the states of Items or other conditions.
 
 By default a background color is chosen based on the semantic tag.
 This default can be overridden here.
@@ -179,7 +176,7 @@ config:
   invertText: false
 ```
 
-Place your custom imge files in `$OH_CONF/html`.
+Place your custom image files in `$OPENHAB_CONF/html`.
 Once they are there, you can use the relative path `/static/image.name` as the URL to the image.
 For example, I placed the file `garage.jpg` in `/etc/openhab/html` and referenced it as you see in the YAML above.
 This is how you use a custom image as the background of a card.
@@ -191,7 +188,7 @@ Note: Even though it is possible and tempting to just link to an absolute URL on
 
 Badges are only available on the Location cards.
 
-If you want to not show any badges at all toggle "Disable badges".
+If you do not want to show any badges at all toggle "Disable badges".
 
 If you want to suppress only certain badges, select those that you want to show under "Enable Badges".
 
